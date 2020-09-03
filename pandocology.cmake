@@ -180,7 +180,7 @@ endfunction()
 #                             --bibliography opus.bib
 #                             --include-after-body=figures.tex
 #         DEPENDS             figures
-#         ENVIRONMENT         TEXINPUTS=/my/custom:/tex/paths
+#         ENVIRONMENT         TEXINPUTS=/my/custom:/tex/paths;PATH=/my/paths:/here
 #         EXPORT_ARCHIVE
 #         )
 #
@@ -201,8 +201,8 @@ endfunction()
 #
 function(add_document)
     set(options          EXPORT_ARCHIVE NO_EXPORT_PRODUCT EXPORT_PDF DIRECT_TEX_TO_PDF VERBOSE)
-    set(oneValueArgs     TARGET OUTPUT_FILE PRODUCT_DIRECTORY ENVIRONMENT)
-    set(multiValueArgs   SOURCES RESOURCE_FILES RESOURCE_DIRS PANDOC_DIRECTIVES DEPENDS)
+    set(oneValueArgs     TARGET OUTPUT_FILE PRODUCT_DIRECTORY)
+    set(multiValueArgs   SOURCES RESOURCE_FILES RESOURCE_DIRS PANDOC_DIRECTIVES DEPENDS ENVIRONMENT)
     cmake_parse_arguments(ADD_DOCUMENT "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN} )
 
     # this is because `make clean` will dangerously clean up source files
@@ -315,7 +315,7 @@ function(add_document)
                 OUTPUT  ${output_file} # note that this is in the build directory
                 DEPENDS ${build_sources} ${build_resources} ${ADD_DOCUMENT_DEPENDS}
                 COMMAND ${CMAKE_COMMAND} -E make_directory ${native_product_directory}
-                COMMAND ${CMAKE_COMMAND} -E env "${ADD_DOCUMENT_ENVIRONMENT}"
+                COMMAND ${CMAKE_COMMAND} -E env ${ADD_DOCUMENT_ENVIRONMENT}
                     latexmk -gg -halt-on-error -interaction=nonstopmode -file-line-error -pdf ${native_build_sources}
                 )
         else()
@@ -323,7 +323,7 @@ function(add_document)
               OUTPUT  ${output_file} # note that this is in the build directory
                 DEPENDS ${build_sources} ${build_resources} ${ADD_DOCUMENT_DEPENDS}
                 COMMAND ${CMAKE_COMMAND} -E make_directory ${native_product_directory}
-                COMMAND ${CMAKE_COMMAND} -E env "${ADD_DOCUMENT_ENVIRONMENT}"
+                COMMAND ${CMAKE_COMMAND} -E env ${ADD_DOCUMENT_ENVIRONMENT}
                     latexmk -gg -halt-on-error -interaction=nonstopmode -file-line-error -pdf ${native_build_sources} 2>/dev/null >/dev/null || (grep --no-messages -A8 ".*:[0-9]*:.*" ${output_file_stemname}.log && false)
                 )
         endif()
@@ -333,7 +333,7 @@ function(add_document)
             OUTPUT  ${output_file} # note that this is in the build directory
             DEPENDS ${build_sources} ${build_resources} ${ADD_DOCUMENT_DEPENDS}
             COMMAND ${CMAKE_COMMAND} -E make_directory ${native_product_directory}
-            COMMAND ${CMAKE_COMMAND} -E env "${ADD_DOCUMENT_ENVIRONMENT}"
+            COMMAND ${CMAKE_COMMAND} -E env ${ADD_DOCUMENT_ENVIRONMENT}
                 ${PANDOC_EXECUTABLE} ${native_build_sources} ${ADD_DOCUMENT_PANDOC_DIRECTIVES} -o ${native_output_file}
             )
         add_to_make_clean(${output_file})
